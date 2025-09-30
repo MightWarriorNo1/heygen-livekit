@@ -106,11 +106,6 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     }
   });
 
-  // Auto-start the avatar session when component mounts
-  useEffect(() => {
-    startVoiceSession();
-  }, [startVoiceSession]);
-
   useUnmount(() => {
     stopAvatar();
   });
@@ -128,17 +123,23 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     <div className="w-full h-full flex flex-col relative">
       {/* Full-screen avatar video */}
       <div className="absolute inset-0 w-full h-full">
-        {sessionState === StreamingAvatarSessionState.CONNECTING ? (
+        {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
+          <AvatarVideo ref={mediaStream} />
+        ) : (
           <div className="w-full h-full flex items-center justify-center bg-black">
             <div className="text-white text-center">
               <div className="mb-4">
                 <LoadingIcon />
               </div>
-              <p className="text-lg">Starting avatar...</p>
+              <p className="text-lg mb-4">Ready to start voice chat</p>
+              <button
+                onClick={startVoiceSession}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              >
+                Start Voice Chat
+              </button>
             </div>
           </div>
-        ) : (
-          <AvatarVideo ref={mediaStream} />
         )}
       </div>
       
