@@ -15,7 +15,6 @@ import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { AvatarControls } from "./AvatarSession/AvatarControls";
 import { useVoiceChat } from "./logic/useVoiceChat";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
-import { LoadingIcon } from "./Icons";
 
 import { AVATARS } from "@/app/lib/constants";
 
@@ -119,36 +118,22 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     }
   }, [mediaStream, stream]);
 
+  // Auto-start the avatar session when component mounts
+  useEffect(() => {
+    startVoiceSession();
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col relative">
       {/* Full-screen avatar video */}
       <div className="absolute inset-0 w-full h-full">
-        {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
-          <AvatarVideo ref={mediaStream} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-black">
-            <div className="text-white text-center">
-              <div className="mb-4">
-                <LoadingIcon />
-              </div>
-              <p className="text-lg mb-4">Ready to start voice chat</p>
-              <button
-                onClick={startVoiceSession}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-              >
-                Start Voice Chat
-              </button>
-            </div>
-          </div>
-        )}
+        <AvatarVideo ref={mediaStream} />
       </div>
       
-      {/* Controls overlay */}
-      {sessionState === StreamingAvatarSessionState.CONNECTED && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
-          <AvatarControls />
-        </div>
-      )}
+      {/* Controls overlay - always show */}
+      <div className="absolute inset-0 z-10">
+        <AvatarControls />
+      </div>
     </div>
   );
 }
