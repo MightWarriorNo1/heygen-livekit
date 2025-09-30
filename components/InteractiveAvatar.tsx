@@ -22,12 +22,14 @@ import { AVATARS } from "@/app/lib/constants";
 interface InteractiveAvatarProps {
   avatarId?: string;
   voiceId?: string;
+  autoStartVoiceChat?: boolean;
 }
 
-function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
+function InteractiveAvatar({ avatarId, voiceId, autoStartVoiceChat = true }: InteractiveAvatarProps) {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
-  const { startVoiceChat } = useVoiceChat();
+  const { startVoiceChat, isVoiceChatLoading } = useVoiceChat();
+  const [initializationStatus, setInitializationStatus] = useState<string>("Initializing...");
 
   const [config] = useState<StartAvatarRequest>(() => ({
     quality: AvatarQuality.Low,
@@ -65,7 +67,10 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
 
   const startVoiceSession = useMemoizedFn(async () => {
     try {
+      setInitializationStatus("Fetching access token...");
       const newToken = await fetchAccessToken();
+      
+      setInitializationStatus("Initializing avatar...");
       const avatar = initAvatar(newToken);
 
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
@@ -79,6 +84,9 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
       avatar.on(StreamingEvents.STREAM_READY, (event) => {
         console.log(">>>>> Stream ready:", event.detail);
+        setInitializationStatus("Starting voice chat...");
+        // Automatically start voice chat when stream is ready
+        startVoiceChat();
       });
       avatar.on(StreamingEvents.USER_START, (event) => {
         console.log(">>>>> User started talking:", event);
@@ -99,12 +107,28 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
         console.log(">>>>> Avatar end message:", event);
       });
 
+      setInitializationStatus("Connecting to avatar...");
       await startAvatar(config);
-      await startVoiceChat();
+      // Voice chat will start automatically when STREAM_READY event fires
     } catch (error) {
       console.error("Error starting avatar session:", error);
+      setInitializationStatus("Error initializing. Please try again.");
     }
   });
+
+  // Automatically start voice session when component mounts (if enabled)
+  useEffect(() => {
+    if (autoStartVoiceChat) {
+      startVoiceSession();
+    }
+  }, [autoStartVoiceChat]);
+
+  // Update status when voice chat loading state changes
+  useEffect(() => {
+    if (isVoiceChatLoading && autoStartVoiceChat) {
+      setInitializationStatus("Starting voice chat...");
+    }
+  }, [isVoiceChatLoading, autoStartVoiceChat]);
 
   useUnmount(() => {
     stopAvatar();
@@ -131,13 +155,20 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
               <div className="mb-4">
                 <LoadingIcon />
               </div>
-              <p className="text-lg mb-4">Ready to start voice chat</p>
-              <button
-                onClick={startVoiceSession}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-              >
-                Start Voice Chat
-              </button>
+              <p className="text-lg mb-4">
+                {autoStartVoiceChat ? initializationStatus : "Ready to start voice chat"}
+              </p>
+              <p className="text-sm text-gray-400">
+                {autoStartVoiceChat ? "This will start automatically" : "Click the button below to begin"}
+              </p>
+              {!autoStartVoiceChat && (
+                <button
+                  onClick={startVoiceSession}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+                >
+                  Start Voice Chat
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -153,10 +184,10 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
   );
 }
 
-export default function InteractiveAvatarWrapper({ avatarId, voiceId }: InteractiveAvatarProps) {
+export default function InteractiveAvatarWrapper({ avatarId, voiceId, autoStartVoiceChat }: InteractiveAvatarProps) {
   return (
     <StreamingAvatarProvider basePath={process.env.NEXT_PUBLIC_BASE_API_URL}>
-      <InteractiveAvatar avatarId={avatarId} voiceId={voiceId} />
+      <InteractiveAvatar avatarId={avatarId} voiceId={voiceId} autoStartVoiceChat={autoStartVoiceChat} />
     </StreamingAvatarProvider>
   );
 }
