@@ -10,40 +10,40 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, useUnmount } from "ahooks";
 
-import { Button } from "./Button";
-import { AvatarConfig } from "./AvatarConfig";
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { AvatarControls } from "./AvatarSession/AvatarControls";
 import { useVoiceChat } from "./logic/useVoiceChat";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
-import { MessageHistory } from "./AvatarSession/MessageHistory";
 
 import { AVATARS } from "@/app/lib/constants";
 
-const DEFAULT_CONFIG: StartAvatarRequest = {
-  quality: AvatarQuality.Low,
-  avatarName: AVATARS[0].avatar_id,
-  knowledgeId: undefined,
-  voice: {
-    rate: 1.5,
-    emotion: VoiceEmotion.EXCITED,
-    model: ElevenLabsModel.eleven_flash_v2_5,
-  },
-  language: "en",
-  voiceChatTransport: VoiceChatTransport.WEBSOCKET,
-  sttSettings: {
-    provider: STTProvider.DEEPGRAM,
-  },
-};
+interface InteractiveAvatarProps {
+  avatarId?: string;
+  voiceId?: string;
+}
 
-function InteractiveAvatar() {
+function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
 
-  const [config, setConfig] = useState<StartAvatarRequest>(DEFAULT_CONFIG);
+  const [config] = useState<StartAvatarRequest>(() => ({
+    quality: AvatarQuality.Low,
+    avatarName: avatarId || AVATARS[0].avatar_id,
+    knowledgeId: undefined,
+    voice: {
+      rate: 1.5,
+      emotion: VoiceEmotion.EXCITED,
+      model: voiceId ? voiceId as ElevenLabsModel : ElevenLabsModel.eleven_flash_v2_5,
+    },
+    language: "en",
+    voiceChatTransport: VoiceChatTransport.WEBSOCKET,
+    sttSettings: {
+      provider: STTProvider.DEEPGRAM,
+    },
+  }));
 
   const mediaStream = useRef<HTMLVideoElement>(null);
 
@@ -63,7 +63,7 @@ function InteractiveAvatar() {
     }
   }
 
-  const startSessionV2 = useMemoizedFn(async (isVoiceChat: boolean) => {
+  const startVoiceSession = useMemoizedFn(async () => {
     try {
       const newToken = await fetchAccessToken();
       const avatar = initAvatar(newToken);
@@ -100,10 +100,7 @@ function InteractiveAvatar() {
       });
 
       await startAvatar(config);
-
-      if (isVoiceChat) {
-        await startVoiceChat();
-      }
+      await startVoiceChat();
     } catch (error) {
       console.error("Error starting avatar session:", error);
     }
@@ -123,43 +120,43 @@ function InteractiveAvatar() {
   }, [mediaStream, stream]);
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="flex flex-col rounded-xl bg-zinc-900 overflow-hidden">
-        <div className="relative w-full aspect-video overflow-hidden flex flex-col items-center justify-center">
-          {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
-            <AvatarVideo ref={mediaStream} />
-          ) : (
-            <AvatarConfig config={config} onConfigChange={setConfig} />
-          )}
-        </div>
-        <div className="flex flex-col gap-3 items-center justify-center p-4 border-t border-zinc-700 w-full">
-          {sessionState === StreamingAvatarSessionState.CONNECTED ? (
-            <AvatarControls />
-          ) : sessionState === StreamingAvatarSessionState.INACTIVE ? (
-            <div className="flex flex-row gap-4">
-              <Button onClick={() => startSessionV2(true)}>
+    <div className="w-full h-full flex flex-col relative">
+      {/* Full-screen avatar video */}
+      <div className="absolute inset-0 w-full h-full">
+        {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
+          <AvatarVideo ref={mediaStream} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-black">
+            <div className="text-white text-center">
+              <div className="mb-4">
+                <LoadingIcon />
+              </div>
+              <p className="text-lg mb-4">Ready to start voice chat</p>
+              <button
+                onClick={startVoiceSession}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              >
                 Start Voice Chat
-              </Button>
-              <Button onClick={() => startSessionV2(false)}>
-                Start Text Chat
-              </Button>
+              </button>
             </div>
-          ) : (
-            <LoadingIcon />
-          )}
-        </div>
+          </div>
+        )}
       </div>
+      
+      {/* Controls overlay */}
       {sessionState === StreamingAvatarSessionState.CONNECTED && (
-        <MessageHistory />
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10">
+          <AvatarControls />
+        </div>
       )}
     </div>
   );
 }
 
-export default function InteractiveAvatarWrapper() {
+export default function InteractiveAvatarWrapper({ avatarId, voiceId }: InteractiveAvatarProps) {
   return (
     <StreamingAvatarProvider basePath={process.env.NEXT_PUBLIC_BASE_API_URL}>
-      <InteractiveAvatar />
+      <InteractiveAvatar avatarId={avatarId} voiceId={voiceId} />
     </StreamingAvatarProvider>
   );
 }

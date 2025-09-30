@@ -14,38 +14,41 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
   const isLoaded = sessionState === StreamingAvatarSessionState.CONNECTED;
 
   return (
-    <>
+    <div className="w-full h-full relative bg-black">
       {connectionQuality !== ConnectionQuality.UNKNOWN && (
-        <div className="absolute top-3 left-3 bg-black text-white rounded-lg px-3 py-2">
-          Connection Quality: {connectionQuality}
+        <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white rounded-lg px-3 py-2 text-sm z-20">
+          Connection: {connectionQuality}
         </div>
       )}
       {isLoaded && (
-        <Button
-          className="absolute top-3 right-3 !p-2 bg-zinc-700 bg-opacity-50 z-10"
+        <button
+          className="absolute top-4 right-4 p-2 bg-black bg-opacity-75 text-white rounded-lg hover:bg-opacity-90 z-20 transition-all"
           onClick={stopAvatar}
         >
           <CloseIcon />
-        </Button>
+        </button>
       )}
       <video
         ref={ref}
         autoPlay
         playsInline
+        muted={false}
+        className="w-full h-full object-cover"
         style={{
           width: "100%",
           height: "100%",
-          objectFit: "contain",
+          objectFit: "cover",
         }}
-      >
-        <track kind="captions" />
-      </video>
+      />
       {!isLoaded && (
-        <div className="w-full h-full flex items-center justify-center absolute top-0 left-0">
-          Loading...
+        <div className="w-full h-full flex items-center justify-center absolute top-0 left-0 bg-black">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Connecting to avatar...</p>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 });
 AvatarVideo.displayName = "AvatarVideo";

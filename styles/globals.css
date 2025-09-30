@@ -2,6 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Cross-platform responsive design */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#__next {
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Ensure full-screen video works on all platforms */
+video {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Mobile and tablet optimizations */
+@media (max-width: 768px) {
+  .controls-overlay {
+    padding: 0.75rem;
+  }
+  
+  .control-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .control-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 li {
   list-style-type: square;
   margin-left: 30px;
