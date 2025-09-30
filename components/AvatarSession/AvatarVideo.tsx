@@ -15,12 +15,10 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
 
   return (
     <div className="w-full h-full relative bg-black">
-      {isLoaded && (
-        <div className="absolute w-full text-center bg-black bg-opacity-75 text-white rounded-lg px-3 py-2 text-sm z-20" style={{ fontFamily: 'Bell MT, serif', fontSize: '14px' }}>
-          <div className="font-semibold" style={{ fontSize: '18px' }}>iSolveUrProblems-beta</div>
-          <div className="text-xs text-gray-300 mt-1">Everything-except Murder</div>
-        </div>
-      )}
+      <div className="absolute w-full text-center bg-black bg-opacity-75 text-white rounded-lg px-3 py-2 text-sm z-20" style={{ fontFamily: 'Bell MT, serif', fontSize: '14px' }}>
+        <div className="font-semibold" style={{ fontSize: '18px' }}>iSolveUrProblems-beta</div>
+        <div className="text-xs text-gray-300 mt-1">Everything-except Murder</div>
+      </div>
       <video
         ref={ref}
         autoPlay
