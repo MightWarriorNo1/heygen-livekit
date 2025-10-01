@@ -15,6 +15,7 @@ export const useXAIVoiceChat = () => {
   const { sendMessage, sendMessageSync } = useTextChat();
   const isProcessingRef = useRef(false);
   const accumulatedMessageRef = useRef("");
+  const isXAIRespondingRef = useRef(false);
 
   // Process user message with xAI when message ends
   const processUserMessageWithXAI = useCallback(
@@ -22,6 +23,7 @@ export const useXAIVoiceChat = () => {
       if (isProcessingRef.current || !userMessage.trim()) return;
       
       isProcessingRef.current = true;
+      isXAIRespondingRef.current = true;
       
       try {
         console.log("Processing user message with xAI:", userMessage);
@@ -56,6 +58,10 @@ export const useXAIVoiceChat = () => {
         await sendMessageSync("Oops! My humor circuits are having a meltdown! Give me a moment to reboot my funny bone! 🤖💥");
       } finally {
         isProcessingRef.current = false;
+        // Reset the xAI responding flag after a delay to allow the avatar to finish speaking
+        setTimeout(() => {
+          isXAIRespondingRef.current = false;
+        }, 3000); // 3 second delay
       }
     },
     [sendMessageSync]
@@ -66,10 +72,16 @@ export const useXAIVoiceChat = () => {
     ({ detail }: { detail: any }) => {
       console.log("User talking message:", detail.message);
       console.log("xAI enabled:", useXAI);
+      console.log("xAI responding:", isXAIRespondingRef.current);
       
-      // Accumulate the message ourselves
-      accumulatedMessageRef.current += detail.message;
-      console.log("Accumulated message:", accumulatedMessageRef.current);
+      // Only process if we're not currently processing an xAI response
+      if (!isProcessingRef.current && !isXAIRespondingRef.current) {
+        // Accumulate the message ourselves
+        accumulatedMessageRef.current += detail.message;
+        console.log("Accumulated message:", accumulatedMessageRef.current);
+      } else {
+        console.log("Ignoring message - xAI is currently processing or responding");
+      }
       
       // Call the original handler for UI updates
       handleUserTalkingMessage({ detail });
@@ -84,12 +96,15 @@ export const useXAIVoiceChat = () => {
       
       console.log("Complete user message for xAI:", completeMessage);
       console.log("useXAI enabled:", useXAI);
+      console.log("Currently processing:", isProcessingRef.current);
+      console.log("xAI responding:", isXAIRespondingRef.current);
       
-      if (completeMessage && useXAI) {
+      // Only process if we have a message, xAI is enabled, and we're not already processing or responding
+      if (completeMessage && useXAI && !isProcessingRef.current && !isXAIRespondingRef.current) {
         console.log("Processing complete message with xAI...");
         processUserMessageWithXAI(completeMessage);
       } else {
-        console.log("No message to process or xAI disabled");
+        console.log("No message to process, xAI disabled, or already processing/responding");
       }
       
       // Reset the accumulated message
