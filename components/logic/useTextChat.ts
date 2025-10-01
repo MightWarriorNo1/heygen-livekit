@@ -20,13 +20,27 @@ export const useTextChat = () => {
 
   const sendMessageSync = useCallback(
     async (message: string) => {
-      if (!avatarRef.current) return;
+      console.log("sendMessageSync called with:", message);
+      console.log("avatarRef.current:", avatarRef.current);
+      
+      if (!avatarRef.current) {
+        console.error("Avatar ref is null - cannot speak");
+        return;
+      }
 
-      return await avatarRef.current?.speak({
-        text: message,
-        taskType: TaskType.TALK,
-        taskMode: TaskMode.SYNC,
-      });
+      try {
+        console.log("Calling avatar.speak with:", { text: message, taskType: TaskType.TALK, taskMode: TaskMode.SYNC });
+        const result = await avatarRef.current.speak({
+          text: message,
+          taskType: TaskType.TALK,
+          taskMode: TaskMode.SYNC,
+        });
+        console.log("Avatar speak result:", result);
+        return result;
+      } catch (error) {
+        console.error("Error calling avatar.speak:", error);
+        throw error;
+      }
     },
     [avatarRef],
   );

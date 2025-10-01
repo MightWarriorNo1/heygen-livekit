@@ -52,7 +52,24 @@ export const useXAIVoiceChat = () => {
         if (aiResponse) {
           // Temporarily disable STT to prevent feedback loop
           console.log("xAI: Temporarily disabling STT to prevent feedback loop");
-          await sendMessageSync(aiResponse);
+          console.log("xAI: Sending response to avatar:", aiResponse);
+          
+          // Add a small delay to ensure avatar is ready
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          try {
+            const result = await sendMessageSync(aiResponse);
+            console.log("xAI: Avatar speak result:", result);
+          } catch (error) {
+            console.error("xAI: Error sending message to avatar:", error);
+            // Try with async version as fallback
+            try {
+              console.log("xAI: Trying async fallback...");
+              sendMessage(aiResponse);
+            } catch (fallbackError) {
+              console.error("xAI: Async fallback also failed:", fallbackError);
+            }
+          }
         }
       } catch (error) {
         console.error("Error processing message with xAI:", error);
