@@ -13,16 +13,6 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
 
   const isLoaded = sessionState === StreamingAvatarSessionState.CONNECTED;
 
-  const handleVideoClick = async () => {
-    if (ref && 'current' in ref && ref.current) {
-      try {
-        await ref.current.play();
-      } catch (error) {
-        console.log("Video play failed:", error);
-      }
-    }
-  };
-
   return (
     <div className="w-full h-full relative bg-black">
        <div className="absolute w-full text-center bg-black bg-opacity-75 text-white rounded-lg px-3 py-2 text-sm z-20" style={{ fontFamily: 'Bell MT, serif', fontSize:"14px" }}>
@@ -34,8 +24,7 @@ export const AvatarVideo = forwardRef<HTMLVideoElement>(({}, ref) => {
         autoPlay
         playsInline
         muted={false}
-        onClick={handleVideoClick}
-        className="w-full h-full object-cover cursor-pointer"
+        className="w-full h-full object-cover"
         style={{
           width: "100%",
           height: "100%",

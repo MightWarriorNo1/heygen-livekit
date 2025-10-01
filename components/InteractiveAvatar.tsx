@@ -100,43 +100,21 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
 
       await startAvatar(config);
-      // Automatically start voice chat after avatar is ready
-      // Add a small delay to ensure the avatar stream is fully ready
-      setTimeout(async () => {
-        try {
-          await startVoiceChat();
-        } catch (voiceError) {
-          console.log("Voice chat could not start automatically:", voiceError);
-          // Voice chat will be available through the controls if needed
-        }
-      }, 1000);
+      await startVoiceChat();
     } catch (error) {
       console.error("Error starting avatar session:", error);
     }
   });
 
-
   useUnmount(() => {
     stopAvatar();
   });
 
-  // Auto-start the avatar session when component mounts
-  useEffect(() => {
-    if (sessionState === StreamingAvatarSessionState.INACTIVE) {
-      startVoiceSession();
-    }
-  }, [sessionState, startVoiceSession]);
-
   useEffect(() => {
     if (stream && mediaStream.current) {
       mediaStream.current.srcObject = stream;
-      mediaStream.current.onloadedmetadata = async () => {
-        try {
-          await mediaStream.current!.play();
-        } catch (error) {
-          console.log("Autoplay prevented, user interaction required:", error);
-          // The video will still be ready, just needs user interaction to play
-        }
+      mediaStream.current.onloadedmetadata = () => {
+        mediaStream.current!.play();
       };
     }
   }, [mediaStream, stream]);
@@ -145,26 +123,23 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     <div className="w-full h-full flex flex-col relative">
       {/* Full-screen avatar video */}
       <div className="absolute inset-0 w-full h-full">
-        {sessionState === StreamingAvatarSessionState.INACTIVE ? (
-          <div className="w-full h-full flex items-center justify-center bg-black">
-            <div className="text-white text-center">
-              <div className="mb-4">
-                <LoadingIcon />
-              </div>
-              <p className="text-lg mb-4">Initializing avatar session...</p>
-            </div>
-          </div>
-        ) : sessionState === StreamingAvatarSessionState.CONNECTING ? (
-          <div className="w-full h-full flex items-center justify-center bg-black">
-            <div className="text-white text-center">
-              <div className="mb-4">
-                <LoadingIcon />
-              </div>
-              <p className="text-lg mb-4">Connecting to avatar...</p>
-            </div>
-          </div>
-        ) : (
+        {sessionState !== StreamingAvatarSessionState.INACTIVE ? (
           <AvatarVideo ref={mediaStream} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-black">
+            <div className="text-white text-center">
+              <div className="mb-4 flex justify-center">
+                <LoadingIcon />
+              </div>
+              {/* <p className="text-lg mb-4">Ready...</p> */}
+              <button
+                onClick={startVoiceSession}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              >
+                Start Avatar
+              </button>
+            </div>
+          </div>
         )}
       </div>
       
