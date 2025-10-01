@@ -95,6 +95,8 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
         console.log(">>>>> User end message:", event);
         if (useXAI) {
+          // Immediately interrupt any potential HeyGen response
+          avatar.interrupt();
           // Only process with xAI, don't let HeyGen respond
           handleEndMessageWithXAI();
         }
@@ -112,11 +114,9 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
         console.log(">>>>> Avatar started talking:", event);
         // If xAI is enabled, interrupt HeyGen's automatic response immediately
         if (useXAI) {
-          // Small delay to ensure HeyGen has started responding
-          setTimeout(() => {
-            avatar.interrupt();
-            console.log("Interrupted HeyGen's automatic response for xAI processing");
-          }, 100);
+          // Interrupt immediately to prevent any HeyGen response
+          avatar.interrupt();
+          console.log("Interrupted HeyGen's automatic response for xAI processing");
         }
       });
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
