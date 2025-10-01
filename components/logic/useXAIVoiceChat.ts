@@ -14,7 +14,6 @@ export const useXAIVoiceChat = () => {
   } = useStreamingAvatarContext();
   const { sendMessage, sendMessageSync } = useTextChat();
   const isProcessingRef = useRef(false);
-  const currentUserMessageRef = useRef("");
 
   // Process user message with xAI when message ends
   const processUserMessageWithXAI = useCallback(
@@ -64,10 +63,9 @@ export const useXAIVoiceChat = () => {
   // Custom message handlers that integrate with xAI
   const handleUserTalkingMessageWithXAI = useCallback(
     ({ detail }: { detail: any }) => {
-      // Accumulate user message
-      currentUserMessageRef.current += detail.message;
+      console.log("User talking message:", detail.message);
       
-      // Call the original handler for UI updates
+      // Call the original handler for UI updates (this accumulates the message)
       handleUserTalkingMessage({ detail });
     },
     [handleUserTalkingMessage]
@@ -75,19 +73,23 @@ export const useXAIVoiceChat = () => {
 
   const handleEndMessageWithXAI = useCallback(
     () => {
-      // Process the complete user message with xAI
-      const completeMessage = currentUserMessageRef.current.trim();
-      if (completeMessage && useXAI) {
-        processUserMessageWithXAI(completeMessage);
-      }
+      // Get the last user message from the messages array
+      const lastUserMessage = messages.findLast(msg => msg.sender === "CLIENT");
+      const completeMessage = lastUserMessage?.content?.trim() || "";
       
-      // Reset the accumulated message
-      currentUserMessageRef.current = "";
+      console.log("Complete user message for xAI:", completeMessage);
+      
+      if (completeMessage && useXAI) {
+        console.log("Processing complete message with xAI...");
+        processUserMessageWithXAI(completeMessage);
+      } else {
+        console.log("No message to process or xAI disabled");
+      }
       
       // Call the original handler
       handleEndMessage();
     },
-    [handleEndMessage, processUserMessageWithXAI, useXAI]
+    [handleEndMessage, processUserMessageWithXAI, useXAI, messages]
   );
 
   // Clear conversation history

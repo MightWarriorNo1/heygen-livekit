@@ -36,6 +36,7 @@ export class XAIService {
 
   public async generateResponse(userMessage: string): Promise<string> {
     try {
+      console.log("xAI: Generating response for:", userMessage);
       const client = getXaiClient();
       
       // Add user message to conversation history
@@ -53,6 +54,7 @@ export class XAIService {
         ...this.conversationHistory,
       ];
 
+      console.log("xAI: Sending request to Grok...");
       const completion = await client.chat.completions.create({
         model: "grok-beta",
         messages: messages as any,
@@ -62,6 +64,7 @@ export class XAIService {
       });
 
       const response = completion.choices[0]?.message?.content || "Oops! My circuits got a bit tangled there. Could you try that again? 😄";
+      console.log("xAI: Generated response:", response);
       
       // Add AI response to conversation history
       this.conversationHistory.push({
@@ -76,7 +79,7 @@ export class XAIService {
 
       return response;
     } catch (error) {
-      console.error("Error generating xAI response:", error);
+      console.error("xAI: Error generating response:", error);
       return "Well, this is awkward! My humor circuits are having a bit of a meltdown. Give me a moment to reboot my funny bone! 🤖💥";
     }
   }
