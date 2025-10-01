@@ -56,7 +56,7 @@ export class XAIService {
 
       console.log("xAI: Sending request to Grok...");
       const completion = await client.chat.completions.create({
-        model: "grok-beta",
+        model: "grok-3",
         messages: messages as any,
         max_tokens: 150,
         temperature: 0.9,
@@ -107,7 +107,7 @@ export class XAIService {
       ];
 
       const stream = await client.chat.completions.create({
-        model: "grok-beta",
+        model: "grok-3",
         messages: messages as any,
         max_tokens: 150,
         temperature: 0.9,
