@@ -4,6 +4,8 @@ declare global {
       NEXT_PUBLIC_AVATAR_ID?: string;
       NEXT_PUBLIC_VOICE_ID?: string;
       NEXT_PUBLIC_BASE_API_URL?: string;
+      XAI_API_KEY?: string;
+      HEYGEN_API_KEY?: string;
     }
   }
 }

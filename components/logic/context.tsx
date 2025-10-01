@@ -61,6 +61,12 @@ type StreamingAvatarContextProps = {
 
   connectionQuality: ConnectionQuality;
   setConnectionQuality: (connectionQuality: ConnectionQuality) => void;
+
+  // xAI integration
+  useXAI: boolean;
+  setUseXAI: (useXAI: boolean) => void;
+  currentUserMessage: string;
+  setCurrentUserMessage: (message: string) => void;
 };
 
 const StreamingAvatarContext = React.createContext<StreamingAvatarContextProps>(
@@ -89,6 +95,10 @@ const StreamingAvatarContext = React.createContext<StreamingAvatarContextProps>(
     setIsAvatarTalking: () => {},
     connectionQuality: ConnectionQuality.UNKNOWN,
     setConnectionQuality: () => {},
+    useXAI: true,
+    setUseXAI: () => {},
+    currentUserMessage: "",
+    setCurrentUserMessage: () => {},
   },
 );
 
@@ -124,12 +134,16 @@ const useStreamingAvatarVoiceChatState = () => {
 const useStreamingAvatarMessageState = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const currentSenderRef = useRef<MessageSender | null>(null);
+  const currentUserMessageRef = useRef<string>("");
 
   const handleUserTalkingMessage = ({
     detail,
   }: {
     detail: UserTalkingMessageEvent;
   }) => {
+    // Accumulate user message
+    currentUserMessageRef.current += detail.message;
+    
     if (currentSenderRef.current === MessageSender.CLIENT) {
       setMessages((prev) => [
         ...prev.slice(0, -1),
@@ -179,6 +193,14 @@ const useStreamingAvatarMessageState = () => {
 
   const handleEndMessage = () => {
     currentSenderRef.current = null;
+    
+    // If we have a complete user message, we'll process it with xAI
+    // This will be handled by the useXAI hook
+    if (currentUserMessageRef.current.trim()) {
+      // The xAI processing will be triggered by the useXAI hook
+      // We just need to make the message available
+      currentUserMessageRef.current = "";
+    }
   };
 
   return {
@@ -219,6 +241,13 @@ const useStreamingAvatarConnectionQualityState = () => {
   return { connectionQuality, setConnectionQuality };
 };
 
+const useStreamingAvatarXAIState = () => {
+  const [useXAI, setUseXAI] = useState(true);
+  const [currentUserMessage, setCurrentUserMessage] = useState("");
+
+  return { useXAI, setUseXAI, currentUserMessage, setCurrentUserMessage };
+};
+
 export const StreamingAvatarProvider = ({
   children,
   basePath,
@@ -233,6 +262,7 @@ export const StreamingAvatarProvider = ({
   const listeningState = useStreamingAvatarListeningState();
   const talkingState = useStreamingAvatarTalkingState();
   const connectionQualityState = useStreamingAvatarConnectionQualityState();
+  const xaiState = useStreamingAvatarXAIState();
 
   return (
     <StreamingAvatarContext.Provider
@@ -245,6 +275,7 @@ export const StreamingAvatarProvider = ({
         ...listeningState,
         ...talkingState,
         ...connectionQualityState,
+        ...xaiState,
       }}
     >
       {children}

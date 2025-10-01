@@ -14,6 +14,7 @@ import { AvatarVideo } from "./AvatarSession/AvatarVideo";
 import { useStreamingAvatarSession } from "./logic/useStreamingAvatarSession";
 import { AvatarControls } from "./AvatarSession/AvatarControls";
 import { useVoiceChat } from "./logic/useVoiceChat";
+import { useXAIVoiceChat } from "./logic/useXAIVoiceChat";
 import { StreamingAvatarProvider, StreamingAvatarSessionState } from "./logic";
 import { LoadingIcon } from "./Icons";
 
@@ -28,6 +29,13 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
   const { initAvatar, startAvatar, stopAvatar, sessionState, stream } =
     useStreamingAvatarSession();
   const { startVoiceChat } = useVoiceChat();
+  const { 
+    useXAI, 
+    setUseXAI, 
+    handleUserTalkingMessageWithXAI, 
+    handleEndMessageWithXAI,
+    clearConversationHistory 
+  } = useXAIVoiceChat();
 
   const [config] = useState<StartAvatarRequest>(() => ({
     quality: AvatarQuality.Low,
@@ -88,9 +96,15 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
         console.log(">>>>> User end message:", event);
+        if (useXAI) {
+          handleEndMessageWithXAI();
+        }
       });
       avatar.on(StreamingEvents.USER_TALKING_MESSAGE, (event) => {
         console.log(">>>>> User talking message:", event);
+        if (useXAI) {
+          handleUserTalkingMessageWithXAI(event);
+        }
       });
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
         console.log(">>>>> Avatar talking message:", event);
