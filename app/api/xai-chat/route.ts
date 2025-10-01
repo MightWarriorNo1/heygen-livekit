@@ -3,11 +3,19 @@ import { XAIService } from "../../lib/xai-service";
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if xAI API key is available
+    if (!process.env.XAI_API_KEY) {
+      return NextResponse.json(
+        { error: "Oops! My humor key is missing! Please add XAI_API_KEY to your .env.local file so I can tell you some jokes! 😄" },
+        { status: 500 }
+      );
+    }
+
     const { message, stream = false } = await request.json();
 
     if (!message) {
       return NextResponse.json(
-        { error: "Message is required" },
+        { error: "Hey! I need something to work with here! Send me a message so I can crack some jokes! 😂" },
         { status: 400 }
       );
     }
@@ -30,8 +38,12 @@ export async function POST(request: NextRequest) {
             controller.close();
           } catch (error) {
             console.error("Streaming error:", error);
+            const errorMessage = error instanceof Error && error.message.includes('XAI_API_KEY') 
+              ? "My comedy license expired! Please check your XAI_API_KEY in the environment variables! 🎭"
+              : "Oops! My humor circuits are having a meltdown! Give me a moment to reboot my funny bone! 🤖💥";
+            
             const errorData = JSON.stringify({ 
-              content: "I'm sorry, I'm having trouble processing your request right now.", 
+              content: errorMessage, 
               done: true 
             });
             controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
@@ -54,8 +66,13 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("xAI API error:", error);
+    
+    const errorMessage = error instanceof Error && error.message.includes('XAI_API_KEY')
+      ? "My humor key is missing! Please add XAI_API_KEY to your .env.local file so I can tell you some jokes! 😄"
+      : "Oops! My comedy routine just crashed! Let me try to reboot my sense of humor! 🤖😂";
+    
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

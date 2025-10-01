@@ -53,7 +53,7 @@ export const useXAIVoiceChat = () => {
       } catch (error) {
         console.error("Error processing message with xAI:", error);
         // Fallback response
-        await sendMessageSync("I'm sorry, I'm having trouble processing your request right now.");
+        await sendMessageSync("Oops! My humor circuits are having a meltdown! Give me a moment to reboot my funny bone! 🤖💥");
       } finally {
         isProcessingRef.current = false;
       }
