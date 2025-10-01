@@ -7,7 +7,7 @@ import {
   STTProvider,
   ElevenLabsModel,
 } from "@heygen/streaming-avatar";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useMemoizedFn, useUnmount } from "ahooks";
 
 import { AvatarVideo } from "./AvatarSession/AvatarVideo";
@@ -37,10 +37,11 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     clearConversationHistory 
   } = useXAIVoiceChat();
 
-  const [config] = useState<StartAvatarRequest>(() => ({
+  // Dynamic config based on xAI state
+  const config = useMemo(() => ({
     quality: AvatarQuality.Low,
     avatarName: avatarId || AVATARS[0].avatar_id,
-    knowledgeId: undefined,
+    knowledgeId: undefined, // This disables HeyGen's built-in brain
     voice: {
       rate: 1.5,
       emotion: VoiceEmotion.EXCITED,
@@ -51,7 +52,9 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     sttSettings: {
       provider: STTProvider.DEEPGRAM,
     },
-  }));
+    // When xAI is enabled, disable HeyGen's automatic responses
+    ...(useXAI && { enableTTS: false }),
+  }), [avatarId, voiceId, useXAI]);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
 
@@ -97,20 +100,28 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
         console.log(">>>>> User end message:", event);
         if (useXAI) {
+          // Only process with xAI, don't let HeyGen respond
           handleEndMessageWithXAI();
         }
+        // If xAI is disabled, let HeyGen handle it normally
       });
       avatar.on(StreamingEvents.USER_TALKING_MESSAGE, (event) => {
         console.log(">>>>> User talking message:", event);
         if (useXAI) {
+          // Only process with xAI, don't let HeyGen respond
           handleUserTalkingMessageWithXAI(event);
         }
+        // If xAI is disabled, let HeyGen handle it normally
       });
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
         console.log(">>>>> Avatar talking message:", event);
+        // If xAI is enabled, we ignore HeyGen's automatic responses
+        // because we're handling responses through xAI
       });
       avatar.on(StreamingEvents.AVATAR_END_MESSAGE, (event) => {
         console.log(">>>>> Avatar end message:", event);
+        // If xAI is enabled, we ignore HeyGen's automatic responses
+        // because we're handling responses through xAI
       });
 
       await startAvatar(config);
