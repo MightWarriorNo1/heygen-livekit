@@ -52,8 +52,6 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     sttSettings: {
       provider: STTProvider.DEEPGRAM,
     },
-    // When xAI is enabled, disable HeyGen's automatic responses
-    ...(useXAI && { enableTTS: false }),
   }), [avatarId, voiceId, useXAI]);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
@@ -79,9 +77,6 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       const newToken = await fetchAccessToken();
       const avatar = initAvatar(newToken);
 
-      avatar.on(StreamingEvents.AVATAR_START_TALKING, (e) => {
-        console.log("Avatar started talking", e);
-      });
       avatar.on(StreamingEvents.AVATAR_STOP_TALKING, (e) => {
         console.log("Avatar stopped talking", e);
       });
@@ -112,6 +107,17 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
           handleUserTalkingMessageWithXAI(event);
         }
         // If xAI is disabled, let HeyGen handle it normally
+      });
+      avatar.on(StreamingEvents.AVATAR_START_TALKING, (event) => {
+        console.log(">>>>> Avatar started talking:", event);
+        // If xAI is enabled, interrupt HeyGen's automatic response immediately
+        if (useXAI) {
+          // Small delay to ensure HeyGen has started responding
+          setTimeout(() => {
+            avatar.interrupt();
+            console.log("Interrupted HeyGen's automatic response for xAI processing");
+          }, 100);
+        }
       });
       avatar.on(StreamingEvents.AVATAR_TALKING_MESSAGE, (event) => {
         console.log(">>>>> Avatar talking message:", event);
