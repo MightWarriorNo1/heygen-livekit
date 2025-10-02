@@ -66,12 +66,19 @@ export const useXAIVoiceChat = () => {
           await new Promise(resolve => setTimeout(resolve, 500));
           
           try {
-            // Use async version to avoid conflicts with HeyGen's system
-            console.log("xAI: Using async sendMessage to avoid conflicts");
-            sendMessage(aiResponse);
-            console.log("xAI: Async message sent successfully");
+            // Use sync version to ensure proper timing
+            console.log("xAI: Using sync sendMessage for better timing");
+            await sendMessageSync(aiResponse);
+            console.log("xAI: Sync message sent successfully");
           } catch (error) {
             console.error("xAI: Error sending message to avatar:", error);
+            // Try async fallback
+            try {
+              console.log("xAI: Trying async fallback...");
+              sendMessage(aiResponse);
+            } catch (fallbackError) {
+              console.error("xAI: Async fallback also failed:", fallbackError);
+            }
           }
         }
       } catch (error) {
@@ -98,7 +105,6 @@ export const useXAIVoiceChat = () => {
       console.log("User talking message:", detail.message);
       console.log("xAI enabled:", useXAI);
       console.log("xAI responding:", isXAIRespondingRef.current);
-      console.log("Currently processing:", isProcessingRef.current);
       
       // Completely ignore all input while xAI is responding OR processing
       if (isXAIRespondingRef.current || isProcessingRef.current) {
