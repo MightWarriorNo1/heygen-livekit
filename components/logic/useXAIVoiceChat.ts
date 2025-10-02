@@ -24,6 +24,10 @@ export const useXAIVoiceChat = () => {
     async (userMessage: string) => {
       if (isProcessingRef.current || !userMessage.trim()) return;
       
+      // Mute microphone IMMEDIATELY when starting xAI processing
+      console.log("xAI: Muting microphone at start of processing");
+      muteInputAudio();
+      
       isProcessingRef.current = true;
       isXAIRespondingRef.current = true;
       
@@ -52,14 +56,14 @@ export const useXAIVoiceChat = () => {
 
         // Send the xAI response to the avatar to speak
         if (aiResponse) {
-          // Mute microphone input to prevent feedback loop
-          console.log("xAI: Muting microphone to prevent feedback loop");
+          // Mute microphone input IMMEDIATELY to prevent feedback loop
+          console.log("xAI: Muting microphone IMMEDIATELY to prevent feedback loop");
           muteInputAudio();
           
           console.log("xAI: Sending response to avatar:", aiResponse);
           
-          // Add a small delay to ensure avatar is ready
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Add a longer delay to ensure microphone is fully muted
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           try {
             // Use async version to avoid conflicts with HeyGen's system
@@ -94,10 +98,11 @@ export const useXAIVoiceChat = () => {
       console.log("User talking message:", detail.message);
       console.log("xAI enabled:", useXAI);
       console.log("xAI responding:", isXAIRespondingRef.current);
+      console.log("Currently processing:", isProcessingRef.current);
       
-      // Completely ignore all input while xAI is responding
-      if (isXAIRespondingRef.current) {
-        console.log("xAI: BLOCKING user input - xAI is currently responding");
+      // Completely ignore all input while xAI is responding OR processing
+      if (isXAIRespondingRef.current || isProcessingRef.current) {
+        console.log("xAI: BLOCKING user input - xAI is currently responding/processing");
         return; // Don't call the original handler at all
       }
       
@@ -118,9 +123,9 @@ export const useXAIVoiceChat = () => {
 
   const handleEndMessageWithXAI = useCallback(
     () => {
-      // Completely ignore if xAI is responding
-      if (isXAIRespondingRef.current) {
-        console.log("xAI: BLOCKING end message - xAI is currently responding");
+      // Completely ignore if xAI is responding OR processing
+      if (isXAIRespondingRef.current || isProcessingRef.current) {
+        console.log("xAI: BLOCKING end message - xAI is currently responding/processing");
         return; // Don't call the original handler at all
       }
       
@@ -135,6 +140,9 @@ export const useXAIVoiceChat = () => {
       // Only process if we have a message, xAI is enabled, and we're not already processing
       if (completeMessage && useXAI && !isProcessingRef.current) {
         console.log("Processing complete message with xAI...");
+        // Mute microphone immediately when starting xAI processing
+        console.log("xAI: Pre-muting microphone before processing");
+        muteInputAudio();
         processUserMessageWithXAI(completeMessage);
       } else {
         console.log("No message to process, xAI disabled, or already processing");
@@ -146,7 +154,7 @@ export const useXAIVoiceChat = () => {
       // Call the original handler
       handleEndMessage();
     },
-    [handleEndMessage, processUserMessageWithXAI, useXAI]
+    [handleEndMessage, processUserMessageWithXAI, useXAI, muteInputAudio]
   );
 
   // Clear conversation history
