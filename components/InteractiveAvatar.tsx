@@ -41,7 +41,7 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
   const config = useMemo(() => ({
     quality: AvatarQuality.Low,
     avatarName: avatarId || AVATARS[0].avatar_id,
-    knowledgeId: undefined, // undefined disables HeyGen's built-in brain
+    knowledgeId: useXAI ? "" : undefined, // Empty string completely disables HeyGen's built-in brain when xAI is enabled
     voice: {
       rate: 1.5,
       emotion: VoiceEmotion.EXCITED,
@@ -52,6 +52,10 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
     sttSettings: {
       provider: STTProvider.DEEPGRAM,
     },
+    // Completely disable HeyGen's automatic response system when xAI is enabled
+    ...(useXAI && {
+      enableVoiceChat: false, // Disable HeyGen's voice chat system
+    }),
   }), [avatarId, voiceId, useXAI]);
 
   const mediaStream = useRef<HTMLVideoElement>(null);
@@ -98,10 +102,10 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (event) => {
         if (useXAI) {
-          // Check if this is a HeyGen response by looking at the event details
-          // We only want to interrupt HeyGen's automatic responses, not our xAI responses
-          console.log("xAI: Avatar started talking - checking if this is HeyGen response");
-          // Don't interrupt immediately - let our xAI response play
+          // Immediately interrupt any HeyGen automatic response
+          // We need to be aggressive to prevent HeyGen from speaking
+          console.log("xAI: Avatar started talking - interrupting HeyGen response immediately");
+          avatar.interrupt();
         }
       });
 
