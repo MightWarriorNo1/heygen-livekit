@@ -41,7 +41,7 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
   const config = useMemo(() => ({
     quality: AvatarQuality.Low,
     avatarName: avatarId || AVATARS[0].avatar_id,
-    knowledgeId: undefined, // This disables HeyGen's built-in brain
+    knowledgeId: undefined, // undefined disables HeyGen's built-in brain
     voice: {
       rate: 1.5,
       emotion: VoiceEmotion.EXCITED,
@@ -82,6 +82,8 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
       avatar.on(StreamingEvents.USER_END_MESSAGE, (event) => {
         if (useXAI) {
+          // Immediately interrupt any potential HeyGen response
+          avatar.interrupt();
           // Only process with xAI, don't let HeyGen respond
           handleEndMessageWithXAI();
         }
@@ -95,7 +97,6 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
         // If xAI is disabled, let HeyGen handle it normally
       });
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (event) => {
-        // Only interrupt if this is a HeyGen automatic response, not our xAI response
         if (useXAI) {
           // Check if this is a HeyGen response by looking at the event details
           // We only want to interrupt HeyGen's automatic responses, not our xAI responses
