@@ -102,10 +102,8 @@ function InteractiveAvatar({ avatarId, voiceId }: InteractiveAvatarProps) {
       });
       avatar.on(StreamingEvents.AVATAR_START_TALKING, (event) => {
         if (useXAI) {
-          // Immediately interrupt any HeyGen automatic response
-          // We need to be aggressive to prevent HeyGen from speaking
-          console.log("xAI: Avatar started talking - interrupting HeyGen response immediately");
-          avatar.interrupt();
+          // Don't interrupt - this could be our xAI response starting to speak
+          console.log("xAI: Avatar started talking - allowing xAI response to play");
         }
       });
 

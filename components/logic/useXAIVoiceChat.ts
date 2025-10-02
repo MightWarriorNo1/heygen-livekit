@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useStreamingAvatarContext } from "./context";
 import { useTextChat } from "./useTextChat";
+import { useVoiceChat } from "./useVoiceChat";
 
 export const useXAIVoiceChat = () => {
   const { 
@@ -13,6 +14,7 @@ export const useXAIVoiceChat = () => {
     handleEndMessage
   } = useStreamingAvatarContext();
   const { sendMessage, sendMessageSync } = useTextChat();
+  const { muteInputAudio, unmuteInputAudio } = useVoiceChat();
   const isProcessingRef = useRef(false);
   const accumulatedMessageRef = useRef("");
   const isXAIRespondingRef = useRef(false);
@@ -50,8 +52,10 @@ export const useXAIVoiceChat = () => {
 
         // Send the xAI response to the avatar to speak
         if (aiResponse) {
-          // Temporarily disable STT to prevent feedback loop
-          console.log("xAI: Temporarily disabling STT to prevent feedback loop");
+          // Mute microphone input to prevent feedback loop
+          console.log("xAI: Muting microphone to prevent feedback loop");
+          muteInputAudio();
+          
           console.log("xAI: Sending response to avatar:", aiResponse);
           
           // Add a small delay to ensure avatar is ready
@@ -68,18 +72,20 @@ export const useXAIVoiceChat = () => {
         }
       } catch (error) {
         console.error("Error processing message with xAI:", error);
-        // Fallback response
+        // Fallback response with muting
+        muteInputAudio();
         await sendMessageSync("Oops! My humor circuits are having a meltdown! Give me a moment to reboot my funny bone! 🤖💥");
       } finally {
         isProcessingRef.current = false;
-        // Reset the xAI responding flag after a longer delay to allow the avatar to finish speaking
+        // Reset the xAI responding flag and unmute microphone after avatar finishes speaking
         setTimeout(() => {
           isXAIRespondingRef.current = false;
-          console.log("xAI: Re-enabled STT, ready for new user input");
+          unmuteInputAudio(); // Unmute microphone after avatar finishes speaking
+          console.log("xAI: Re-enabled microphone, ready for new user input");
         }, 5000); // 5 second delay to ensure avatar finishes speaking
       }
     },
-    [sendMessageSync]
+    [sendMessageSync, sendMessage, muteInputAudio, unmuteInputAudio]
   );
 
   // Custom message handlers that integrate with xAI
